@@ -1,0 +1,46 @@
+{
+    "name": "mpyw/coutte",
+    "description": "Yet another asynchronous scraper based on mpyw/co",
+    "type": "library",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "mpyw",
+            "email": "ryosuke_i_628@yahoo.co.jp"
+        }
+    ],
+    "autoload": {
+        "psr-4": {
+            "mpyw\\Coutte\\": "src/"
+        }
+    },
+    "require": {
+        "php": ">=5.5.0",
+        "lib-curl": ">=7.2.0",
+        "mpyw/co": "^1.0",
+        "symfony/browser-kit": "^3.1"
+    },
+    "scripts": {
+        "test": [
+            "php vendor/bin/codecept run unit --coverage --coverage-xml"
+        ]
+    },
+    "require-dev": {
+        "php": ">=7.0.0",
+        "lib-curl": ">=7.2.0",
+        "mpyw/twistoauth": "~3.0",
+        "codeception/aspect-mock": "^2.0",
+        "codeception/codeception": "^2.2",
+        "codeception/specify": "*",
+        "codeception/verify": "*",
+        "satooshi/php-coveralls": "^1.0",
+        "mpyw/privator": "^2.0"
+    },
+    "archive": {
+        "exclude": [
+            "*",
+            ".*",
+            "!/src/*"
+        ]
+    }
+}
