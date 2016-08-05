@@ -178,7 +178,7 @@ abstract class AsyncClient extends BaseClient
     /**
      * Follow redirects asynchronously?
      *
-     * @return Crawler
+     * @return \Generator
      *
      * @throws \LogicException If request was not a redirect
      */
@@ -207,6 +207,12 @@ abstract class AsyncClient extends BaseClient
         yield CoInterface::RETURN_WITH => $response;
     }
 
+    /**
+     * @param string $method
+     * @param string $uri
+     * @param string|null $content
+     * @param boolean $changeHistory
+     */
     private function beforeRequest($method, $uri, array $parameters, array $files, array $server, $content, $changeHistory)
     {
         if ($this->isMainRequestExtended) {
@@ -234,6 +240,9 @@ abstract class AsyncClient extends BaseClient
         return $uri;
     }
 
+    /**
+     * @param string $uri
+     */
     private function afterRequest($uri)
     {
         $this->internalResponse = $this->filterResponse($this->response);
