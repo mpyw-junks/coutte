@@ -122,11 +122,11 @@ class Client extends AsyncBaseClient implements BasicInterface, RequesterInterfa
     protected function addMultipartFiles(array $files, array &$multipart, $arrayName = '')
     {
         foreach ($files as $name => $info) {
-            if ($array_name !== '') {
+            if ($arrayName !== '') {
                 $name = "{$arrayName}[{$name}]";
             }
             if ($info instanceof \CURLFile) {
-                $multipart[$name] = $file;
+                $multipart[$name] = $info;
                 continue;
             }
             if (!is_array($info)) {
@@ -151,10 +151,10 @@ class Client extends AsyncBaseClient implements BasicInterface, RequesterInterfa
     protected function addMultipartFields(array $params, array &$multipart, $arrayName = '')
     {
         foreach ($params as $name => $value) {
-            if ($array_name !== '') {
+            if ($arrayName !== '') {
                 $name = "{$arrayName}[{$name}]";
             }
-            if (!is_array($info)) {
+            if (!is_array($value)) {
                 $multipart[$name] = $value;
                 continue;
             }

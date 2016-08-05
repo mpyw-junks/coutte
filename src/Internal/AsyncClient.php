@@ -13,9 +13,18 @@ use Symfony\Component\DomCrawler\Form;
 
 abstract class AsyncClient extends BaseClient
 {
-    private $maxRedirects = -1;
-    private $redirectCount = 0;
-    private $isMainRequest = true;
+    private $maxRedirectsExtended = -1;
+    private $redirectCountExtended = 0;
+    private $isMainRequestExtended = true;
+
+    /**
+     * Makes an asynchronous request.
+     *
+     * @param object $request An origin request instance
+     *
+     * @return \Generator object An origin response instance
+     */
+    abstract protected function doRequestAsync($request);
 
     /**
      * Sets the maximum number of requests that crawler can follow.
@@ -24,8 +33,8 @@ abstract class AsyncClient extends BaseClient
      */
     public function setMaxRedirects($maxRedirects)
     {
-        $this->maxRedirects = $maxRedirects < 0 ? -1 : $maxRedirects;
-        $this->followRedirects = -1 != $this->maxRedirects;
+        $this->maxRedirectsExtended = $maxRedirects < 0 ? -1 : $maxRedirects;
+        $this->followRedirects = -1 != $this->maxRedirectsExtended;
     }
     /**
      * Returns the maximum number of requests that crawler can follow.
@@ -34,7 +43,7 @@ abstract class AsyncClient extends BaseClient
      */
     public function getMaxRedirects()
     {
-        return $this->maxRedirects;
+        return $this->maxRedirectsExtended;
     }
 
     /**
@@ -59,7 +68,7 @@ abstract class AsyncClient extends BaseClient
     public function clickAsync(Link $link)
     {
         if ($link instanceof Form) {
-            return $this->submit($link);
+            return $this->submitAsync($link);
         }
         return $this->requestAsync($link->getMethod(), $link->getUri());
     }
@@ -93,10 +102,10 @@ abstract class AsyncClient extends BaseClient
      */
     public function request($method, $uri, array $parameters = array(), array $files = array(), array $server = array(), $content = null, $changeHistory = true)
     {
-        if ($this->isMainRequest) {
-            $this->redirectCount = 0;
+        if ($this->isMainRequestExtended) {
+            $this->redirectCountExtended = 0;
         } else {
-            ++$this->redirectCount;
+            ++$this->redirectCountExtended;
         }
         $uri = $this->getAbsoluteUri($uri);
         $server = array_merge($this->server, $server);
@@ -107,7 +116,7 @@ abstract class AsyncClient extends BaseClient
             $server['HTTP_REFERER'] = $this->history->current()->getUri();
         }
         if (empty($server['HTTP_HOST'])) {
-            $server['HTTP_HOST'] = $this->extractHost($uri);
+            $server['HTTP_HOST'] = $this->extractHostExtended($uri);
         }
         $server['HTTPS'] = 'https' == parse_url($uri, PHP_URL_SCHEME);
         $this->internalRequest = new Request($uri, $method, $parameters, $files, $this->cookieJar->allValues($uri), $server, $content);
@@ -145,10 +154,10 @@ abstract class AsyncClient extends BaseClient
      */
     public function requestAsync($method, $uri, array $parameters = array(), array $files = array(), array $server = array(), $content = null, $changeHistory = true)
     {
-        if ($this->isMainRequest) {
-            $this->redirectCount = 0;
+        if ($this->isMainRequestExtended) {
+            $this->redirectCountExtended = 0;
         } else {
-            ++$this->redirectCount;
+            ++$this->redirectCountExtended;
         }
         $uri = $this->getAbsoluteUri($uri);
         $server = array_merge($this->server, $server);
@@ -159,7 +168,7 @@ abstract class AsyncClient extends BaseClient
             $server['HTTP_REFERER'] = $this->history->current()->getUri();
         }
         if (empty($server['HTTP_HOST'])) {
-            $server['HTTP_HOST'] = $this->extractHost($uri);
+            $server['HTTP_HOST'] = $this->extractHostExtended($uri);
         }
         $server['HTTPS'] = 'https' == parse_url($uri, PHP_URL_SCHEME);
         $this->internalRequest = new Request($uri, $method, $parameters, $files, $this->cookieJar->allValues($uri), $server, $content);
@@ -224,9 +233,9 @@ abstract class AsyncClient extends BaseClient
         if (empty($this->redirect)) {
             throw new \LogicException('The request was not redirected.');
         }
-        if (-1 !== $this->maxRedirects) {
-            if ($this->redirectCount > $this->maxRedirects) {
-                throw new \LogicException(sprintf('The maximum number (%d) of redirections was reached.', $this->maxRedirects));
+        if (-1 !== $this->maxRedirectsExtended) {
+            if ($this->redirectCountExtended > $this->maxRedirectsExtended) {
+                throw new \LogicException(sprintf('The maximum number (%d) of redirections was reached.', $this->maxRedirectsExtended));
             }
         }
         $request = $this->internalRequest;
@@ -246,10 +255,10 @@ abstract class AsyncClient extends BaseClient
             $parameters = $request->getParameters();
         }
         $server = $request->getServer();
-        $server = $this->updateServerFromUri($server, $this->redirect);
-        $this->isMainRequest = false;
+        $server = $this->updateServerFromUriExtended($server, $this->redirect);
+        $this->isMainRequestExtended = false;
         $response = $this->request($method, $this->redirect, $parameters, $files, $server, $content);
-        $this->isMainRequest = true;
+        $this->isMainRequestExtended = true;
         return $response;
     }
 
@@ -265,9 +274,9 @@ abstract class AsyncClient extends BaseClient
         if (empty($this->redirect)) {
             throw new \LogicException('The request was not redirected.');
         }
-        if (-1 !== $this->maxRedirects) {
-            if ($this->redirectCount > $this->maxRedirects) {
-                throw new \LogicException(sprintf('The maximum number (%d) of redirections was reached.', $this->maxRedirects));
+        if (-1 !== $this->maxRedirectsExtended) {
+            if ($this->redirectCountExtended > $this->maxRedirectsExtended) {
+                throw new \LogicException(sprintf('The maximum number (%d) of redirections was reached.', $this->maxRedirectsExtended));
             }
         }
         $request = $this->internalRequest;
@@ -287,10 +296,10 @@ abstract class AsyncClient extends BaseClient
             $parameters = $request->getParameters();
         }
         $server = $request->getServer();
-        $server = $this->updateServerFromUri($server, $this->redirect);
-        $this->isMainRequest = false;
+        $server = $this->updateServerFromUriExtended($server, $this->redirect);
+        $this->isMainRequestExtended = false;
         $response = (yield $this->requestAsync($method, $this->redirect, $parameters, $files, $server, $content));
-        $this->isMainRequest = true;
+        $this->isMainRequestExtended = true;
         yield CoInterface::RETURN_WITH => $response;
     }
 
@@ -307,16 +316,16 @@ abstract class AsyncClient extends BaseClient
         yield CoInterface::RETURN_WITH => $this->requestAsync($request->getMethod(), $request->getUri(), $request->getParameters(), $request->getFiles(), $request->getServer(), $request->getContent(), $changeHistory);
     }
 
-    private function updateServerFromUri($server, $uri)
+    private function updateServerFromUriExtended($server, $uri)
     {
-        $server['HTTP_HOST'] = $this->extractHost($uri);
+        $server['HTTP_HOST'] = $this->extractHostExtended($uri);
         $scheme = parse_url($uri, PHP_URL_SCHEME);
         $server['HTTPS'] = null === $scheme ? $server['HTTPS'] : 'https' == $scheme;
         unset($server['HTTP_IF_NONE_MATCH'], $server['HTTP_IF_MODIFIED_SINCE']);
         return $server;
     }
 
-    private function extractHost($uri)
+    private function extractHostExtended($uri)
     {
         $host = parse_url($uri, PHP_URL_HOST);
         if ($port = parse_url($uri, PHP_URL_PORT)) {
