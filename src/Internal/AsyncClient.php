@@ -176,9 +176,9 @@ abstract class AsyncClient extends BaseClient
     }
 
     /**
-     * Follow redirects asynchronously?
+     * Follow redirects?
      *
-     * @return \Generator
+     * @return Crawler
      *
      * @throws \LogicException If request was not a redirect
      */
@@ -188,7 +188,7 @@ abstract class AsyncClient extends BaseClient
         $this->isMainRequestExtended = false;
         $response = $this->request($p['method'], $this->redirect, $p['parameters'], $p['files'], $p['server'], $p['content']);
         $this->isMainRequestExtended = true;
-        yield CoInterface::RETURN_WITH => $response;
+        return $response;
     }
 
     /**
@@ -210,8 +210,11 @@ abstract class AsyncClient extends BaseClient
     /**
      * @param string $method
      * @param string $uri
+     * @param array $parameters
+     * @param array $server
      * @param string|null $content
-     * @param boolean $changeHistory
+     * @param bool $changeHistory
+     * @return string
      */
     private function beforeRequest($method, $uri, array $parameters, array $files, array $server, $content, $changeHistory)
     {
@@ -266,7 +269,7 @@ abstract class AsyncClient extends BaseClient
         $request = $this->internalRequest;
         if (in_array($this->internalResponse->getStatus(), [302, 303])) {
             $method = 'GET';
-            $files = array();
+            $files = [];
             $content = null;
         } else {
             $method = $request->getMethod();
@@ -279,8 +282,7 @@ abstract class AsyncClient extends BaseClient
         } else {
             $parameters = $request->getParameters();
         }
-        $server = $request->getServer();
-        $server = $this->updateServerFromUriExtended($server, $this->redirect);
+        $server = $this->updateServerFromUriExtended($request->getServer(), $this->redirect);
         return compact('method', 'parameters', 'files', 'server', 'content');
     }
 
