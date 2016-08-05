@@ -2,7 +2,7 @@
 
 namespace mpyw\Coutte\Internal;
 
-use mpyw\Co\Co;
+use mpyw\Co\CoInterface;
 use mpyw\Co\CURLException;
 use Symfony\Component\BrowserKit\Client as BaseClient;
 use Symfony\Component\BrowserKit\Request;
@@ -177,9 +177,9 @@ abstract class AsyncClient extends BaseClient
             $this->redirect = null;
         }
         if ($this->followRedirects && $this->redirect) {
-            yield Co::RETURN_WITH => $this->crawler = (yield $this->followRedirectAsync());
+            yield CoInterface::RETURN_WITH => $this->crawler = (yield $this->followRedirectAsync());
         }
-        yield Co::RETURN_WITH => $this->crawler = $this->createCrawlerFromContent($this->internalRequest->getUri(), $this->internalResponse->getContent(), $this->internalResponse->getHeader('Content-Type'));
+        yield CoInterface::RETURN_WITH => $this->crawler = $this->createCrawlerFromContent($this->internalRequest->getUri(), $this->internalResponse->getContent(), $this->internalResponse->getHeader('Content-Type'));
     }
 
     /**
@@ -291,7 +291,7 @@ abstract class AsyncClient extends BaseClient
         $this->isMainRequest = false;
         $response = (yield $this->requestAsync($method, $this->redirect, $parameters, $files, $server, $content));
         $this->isMainRequest = true;
-        yield Co::RETURN_WITH => $response;
+        yield CoInterface::RETURN_WITH => $response;
     }
 
     /**
@@ -304,7 +304,7 @@ abstract class AsyncClient extends BaseClient
      */
     protected function requestFromRequestAsync(Request $request, $changeHistory = true)
     {
-        yield Co::RETURN_WITH => $this->requestAsync($request->getMethod(), $request->getUri(), $request->getParameters(), $request->getFiles(), $request->getServer(), $request->getContent(), $changeHistory);
+        yield CoInterface::RETURN_WITH => $this->requestAsync($request->getMethod(), $request->getUri(), $request->getParameters(), $request->getFiles(), $request->getServer(), $request->getContent(), $changeHistory);
     }
 
     private function updateServerFromUri($server, $uri)

@@ -2,14 +2,13 @@
 
 namespace mpyw\Coutte;
 
+use mpyw\Co\CoInterface;
 use mpyw\Co\CURLException;
 use mpyw\Coutte\Internal\AsyncClient as AsyncBaseClient;
 use Symfony\Component\BrowserKit\Request;
 use Symfony\Component\BrowserKit\Response;
 
-use mpyw\Coutte\Internal\Option;
-
-class Client extends AsyncBaseClient
+class Client extends AsyncBaseClient implements BasicInterface, RequesterInterface, AsyncRequesterInterface
 {
     /**
      * Makes a request.
@@ -39,7 +38,7 @@ class Client extends AsyncBaseClient
     {
         $ch = $this->createCurl($request);
         $content = (yield $ch);
-        yield Co::RETURN_WITH => $this->processResult($content, $ch);
+        yield CoInterface::RETURN_WITH => $this->processResult($content, $ch);
     }
 
     protected function createCurl($request)
@@ -83,7 +82,7 @@ class Client extends AsyncBaseClient
         preg_match_all('/^([^:]+?):(.+)$/m', $head, $matches, PREG_SET_ORDER);
         $headers = [];
         foreach ($matches as $match) {
-            $headers[$match[1]][] = $match[2];
+            $headers[trim($match[1])][] = trim($match[2]);
         }
         return new Response($data, curl_getinfo($ch, CURLINFO_HTTP_CODE), $headers);
     }
@@ -151,15 +150,15 @@ class Client extends AsyncBaseClient
 
     protected function addMultipartFields(array $params, array &$multipart, $arrayName = '')
     {
-        foreach ($files as $name => $info) {
+        foreach ($params as $name => $value) {
             if ($array_name !== '') {
                 $name = "{$arrayName}[{$name}]";
             }
             if (!is_array($info)) {
-                $multipart[$name] = $info;
+                $multipart[$name] = $value;
                 continue;
             }
-            $this->addMultipartFields($info, $multipart, $name);
+            $this->addMultipartFields($value, $multipart, $name);
         }
     }
 }
