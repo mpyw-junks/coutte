@@ -3,10 +3,8 @@
 namespace mpyw\Coutte\Internal;
 
 use mpyw\Co\CoInterface;
-use mpyw\Co\CURLException;
 use Symfony\Component\BrowserKit\Client as BaseClient;
 use Symfony\Component\BrowserKit\Request;
-use Symfony\Component\BrowserKit\Response;
 use Symfony\Component\DomCrawler\Crawler;
 use Symfony\Component\DomCrawler\Link;
 use Symfony\Component\DomCrawler\Form;
@@ -20,7 +18,7 @@ abstract class AsyncClient extends BaseClient
     /**
      * Makes an asynchronous request.
      *
-     * @param object $request An origin request instance
+     * @param Request $request An origin request instance
      *
      * @return \Generator object An origin response instance
      */
@@ -110,7 +108,7 @@ abstract class AsyncClient extends BaseClient
         $uri = $this->getAbsoluteUri($uri);
         $server = array_merge($this->server, $server);
         if (isset($server['HTTPS'])) {
-            $uri = preg_replace('{^'.parse_url($uri, PHP_URL_SCHEME).'}', $server['HTTPS'] ? 'https' : 'http', $uri);
+            $uri = preg_replace('{^' . parse_url($uri, PHP_URL_SCHEME) . '}', $server['HTTPS'] ? 'https' : 'http', $uri);
         }
         if (!$this->history->isEmpty()) {
             $server['HTTP_REFERER'] = $this->history->current()->getUri();
@@ -162,7 +160,7 @@ abstract class AsyncClient extends BaseClient
         $uri = $this->getAbsoluteUri($uri);
         $server = array_merge($this->server, $server);
         if (isset($server['HTTPS'])) {
-            $uri = preg_replace('{^'.parse_url($uri, PHP_URL_SCHEME).'}', $server['HTTPS'] ? 'https' : 'http', $uri);
+            $uri = preg_replace('{^' . parse_url($uri, PHP_URL_SCHEME) . '}', $server['HTTPS'] ? 'https' : 'http', $uri);
         }
         if (!$this->history->isEmpty()) {
             $server['HTTP_REFERER'] = $this->history->current()->getUri();
@@ -204,7 +202,7 @@ abstract class AsyncClient extends BaseClient
     /**
      * Goes forward in the browser history asynchronously.
      *
-     * @return Crawler
+     * @return \Generator
      */
     public function forwardAsync()
     {
@@ -214,7 +212,7 @@ abstract class AsyncClient extends BaseClient
     /**
      * Reloads the current browser asynchronously.
      *
-     * @return Crawler
+     * @return \Generator
      */
     public function reloadAsync()
     {
@@ -329,7 +327,7 @@ abstract class AsyncClient extends BaseClient
     {
         $host = parse_url($uri, PHP_URL_HOST);
         if ($port = parse_url($uri, PHP_URL_PORT)) {
-            return $host.':'.$port;
+            return $host . ':' . $port;
         }
         return $host;
     }
