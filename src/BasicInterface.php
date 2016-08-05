@@ -45,6 +45,31 @@ interface BasicInterface
     public function getMaxRedirects();
 
     /**
+     * Sets server parameters.
+     *
+     * @param array $server An array of server parameters
+     */
+    public function setServerParameters(array $server);
+
+    /**
+     * Sets single server parameter.
+     *
+     * @param string $key   A key of the parameter
+     * @param string $value A value of the parameter
+     */
+    public function setServerParameter($key, $value);
+
+    /**
+     * Gets single server parameter for specified key.
+     *
+     * @param string $key     A key of the parameter to get
+     * @param string $default A default value when key is undefined
+     *
+     * @return string A value of the parameter
+     */
+    public function getServerParameter($key, $default = '');
+
+    /**
      * Returns the History instance.
      *
      * @return History A History instance
