@@ -15,7 +15,7 @@ class Client extends AsyncBaseClient implements BasicInterface, RequesterInterfa
      *
      * @param object $request An origin request instance
      *
-     * @return object An origin response instance
+     * @return Response An origin response instance
      */
     protected function doRequest($request)
     {
@@ -76,6 +76,9 @@ class Client extends AsyncBaseClient implements BasicInterface, RequesterInterfa
         return $ch;
     }
 
+    /**
+     * @param resource $ch
+     */
     protected function processResult($content, $ch)
     {
         list($head, $data) = explode("\r\n\r\n", $content, 2) + [1 => ''];
