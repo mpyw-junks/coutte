@@ -133,7 +133,7 @@ class Client extends AsyncBaseClient implements BasicInterface, RequesterInterfa
                 continue;
             }
             if (!is_array($info)) {
-                $multipart[$name] = new \CURLFile($file);
+                $multipart[$name] = new \CURLFile($info);
                 continue;
             }
             if (!isset($info['tmp_name'])) {

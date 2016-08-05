@@ -25,6 +25,18 @@ abstract class AsyncClient extends BaseClient
     abstract protected function doRequestAsync($request);
 
     /**
+     * Unsupported action.
+     *
+     * @param bool $insulated
+     *
+     * @throws \BadMethodCallException
+     */
+    public function insulate($insulated = true)
+    {
+        throw new \BadMethodCallException('Unsupported action.');
+    }
+
+    /**
      * Sets the maximum number of requests that crawler can follow.
      *
      * @param int $maxRedirects
@@ -45,148 +57,16 @@ abstract class AsyncClient extends BaseClient
     }
 
     /**
-     * Unsupported action.
+     * Makes a request from a Request object directly asynchronously.
      *
-     * @param bool $insulated
-     *
-     * @throws \BadMethodCallException
-     */
-    public function insulate($insulated = true)
-    {
-        throw new \BadMethodCallException('Unsupported action.');
-    }
-
-    /**
-     * Clicks on a given link asynchronously.
-     *
-     * @param Link $link A Link instance
+     * @param Request $request       A Request instance
+     * @param bool    $changeHistory Whether to update the history or not (only used internally for back(), forward(), and reload())
      *
      * @return \Generator Crawler
      */
-    public function clickAsync(Link $link)
+    protected function requestFromRequestAsync(Request $request, $changeHistory = true)
     {
-        if ($link instanceof Form) {
-            return $this->submitAsync($link);
-        }
-        return $this->requestAsync($link->getMethod(), $link->getUri());
-    }
-
-    /**
-     * Submits a form asynchronously.
-     *
-     * @param Form  $form   A Form instance
-     * @param array $values An array of form field values
-     *
-     * @return \Generator Crawler
-     */
-    public function submitAsync(Form $form, array $values = array())
-    {
-        $form->setValues($values);
-        return $this->requestAsync($form->getMethod(), $form->getUri(), $form->getPhpValues(), $form->getPhpFiles());
-    }
-
-    /**
-     * Calls a URI.
-     *
-     * @param string $method        The request method
-     * @param string $uri           The URI to fetch
-     * @param array  $parameters    The Request parameters
-     * @param array  $files         The files
-     * @param array  $server        The server parameters (HTTP headers are referenced with a HTTP_ prefix as PHP does)
-     * @param string $content       The raw body data
-     * @param bool   $changeHistory Whether to update the history or not (only used internally for back(), forward(), and reload())
-     *
-     * @return Crawler
-     */
-    public function request($method, $uri, array $parameters = array(), array $files = array(), array $server = array(), $content = null, $changeHistory = true)
-    {
-        if ($this->isMainRequestExtended) {
-            $this->redirectCountExtended = 0;
-        } else {
-            ++$this->redirectCountExtended;
-        }
-        $uri = $this->getAbsoluteUri($uri);
-        $server = array_merge($this->server, $server);
-        if (isset($server['HTTPS'])) {
-            $uri = preg_replace('{^' . parse_url($uri, PHP_URL_SCHEME) . '}', $server['HTTPS'] ? 'https' : 'http', $uri);
-        }
-        if (!$this->history->isEmpty()) {
-            $server['HTTP_REFERER'] = $this->history->current()->getUri();
-        }
-        if (empty($server['HTTP_HOST'])) {
-            $server['HTTP_HOST'] = $this->extractHostExtended($uri);
-        }
-        $server['HTTPS'] = 'https' == parse_url($uri, PHP_URL_SCHEME);
-        $this->internalRequest = new Request($uri, $method, $parameters, $files, $this->cookieJar->allValues($uri), $server, $content);
-        $this->request = $this->filterRequest($this->internalRequest);
-        if (true === $changeHistory) {
-            $this->history->add($this->internalRequest);
-        }
-        $this->response = $this->doRequest($this->request);
-        $this->internalResponse = $this->filterResponse($this->response);
-        $this->cookieJar->updateFromResponse($this->internalResponse, $uri);
-        $status = $this->internalResponse->getStatus();
-        if ($status >= 300 && $status < 400) {
-            $this->redirect = $this->internalResponse->getHeader('Location');
-        } else {
-            $this->redirect = null;
-        }
-        if ($this->followRedirects && $this->redirect) {
-            return $this->crawler = $this->followRedirect();
-        }
-        return $this->crawler = $this->createCrawlerFromContent($this->internalRequest->getUri(), $this->internalResponse->getContent(), $this->internalResponse->getHeader('Content-Type'));
-    }
-
-    /**
-     * Calls a URI asynchronously.
-     *
-     * @param string $method        The request method
-     * @param string $uri           The URI to fetch
-     * @param array  $parameters    The Request parameters
-     * @param array  $files         The files
-     * @param array  $server        The server parameters (HTTP headers are referenced with a HTTP_ prefix as PHP does)
-     * @param string $content       The raw body data
-     * @param bool   $changeHistory Whether to update the history or not (only used internally for back(), forward(), and reload())
-     *
-     * @return \Generator Crawler
-     */
-    public function requestAsync($method, $uri, array $parameters = array(), array $files = array(), array $server = array(), $content = null, $changeHistory = true)
-    {
-        if ($this->isMainRequestExtended) {
-            $this->redirectCountExtended = 0;
-        } else {
-            ++$this->redirectCountExtended;
-        }
-        $uri = $this->getAbsoluteUri($uri);
-        $server = array_merge($this->server, $server);
-        if (isset($server['HTTPS'])) {
-            $uri = preg_replace('{^' . parse_url($uri, PHP_URL_SCHEME) . '}', $server['HTTPS'] ? 'https' : 'http', $uri);
-        }
-        if (!$this->history->isEmpty()) {
-            $server['HTTP_REFERER'] = $this->history->current()->getUri();
-        }
-        if (empty($server['HTTP_HOST'])) {
-            $server['HTTP_HOST'] = $this->extractHostExtended($uri);
-        }
-        $server['HTTPS'] = 'https' == parse_url($uri, PHP_URL_SCHEME);
-        $this->internalRequest = new Request($uri, $method, $parameters, $files, $this->cookieJar->allValues($uri), $server, $content);
-        $this->request = $this->filterRequest($this->internalRequest);
-        if (true === $changeHistory) {
-            $this->history->add($this->internalRequest);
-        }
-        $this->response = (yield $this->doRequestAsync($this->request));
-        $this->internalResponse = $this->filterResponse($this->response);
-        $this->cookieJar->updateFromResponse($this->internalResponse, $uri);
-        $status = $this->internalResponse->getStatus();
-        if ($status >= 300 && $status < 400) {
-            $this->redirect = $this->internalResponse->getHeader('Location');
-        } else {
-            $this->redirect = null;
-        }
-        if ($this->followRedirects && $this->redirect) {
-            yield CoInterface::RETURN_WITH => $this->crawler = (yield $this->followRedirectAsync());
-        }
-        yield CoInterface::RETURN_WITH => $this->crawler = $this->createCrawlerFromContent($this->internalRequest->getUri(), $this->internalResponse->getContent(), $this->internalResponse->getHeader('Content-Type'));
+        yield CoInterface::RETURN_WITH => $this->requestAsync($request->getMethod(), $request->getUri(), $request->getParameters(), $request->getFiles(), $request->getServer(), $request->getContent(), $changeHistory);
     }
 
     /**
@@ -220,6 +100,82 @@ abstract class AsyncClient extends BaseClient
     }
 
     /**
+     * Clicks on a given link asynchronously.
+     *
+     * @param Link $link A Link instance
+     *
+     * @return \Generator Crawler
+     */
+    public function clickAsync(Link $link)
+    {
+        return $link instanceof Form
+                ? $this->submitAsync($link)
+                : $this->requestAsync($link->getMethod(), $link->getUri());
+    }
+
+    /**
+     * Submits a form asynchronously.
+     *
+     * @param Form  $form   A Form instance
+     * @param array $values An array of form field values
+     *
+     * @return \Generator Crawler
+     */
+    public function submitAsync(Form $form, array $values = [])
+    {
+        $form->setValues($values);
+        return $this->requestAsync($form->getMethod(), $form->getUri(), $form->getPhpValues(), $form->getPhpFiles());
+    }
+
+    /**
+     * Calls a URI.
+     *
+     * @param string $method        The request method
+     * @param string $uri           The URI to fetch
+     * @param array  $parameters    The Request parameters
+     * @param array  $files         The files
+     * @param array  $server        The server parameters (HTTP headers are referenced with a HTTP_ prefix as PHP does)
+     * @param string $content       The raw body data
+     * @param bool   $changeHistory Whether to update the history or not (only used internally for back(), forward(), and reload())
+     *
+     * @return Crawler
+     */
+    public function request($method, $uri, array $parameters = [], array $files = [], array $server = [], $content = null, $changeHistory = true)
+    {
+        $uri = $this->beforeRequest($method, $uri, $parameters, $files, $server, $content, $changeHistory);
+        $this->response = $this->doRequest($this->request);
+        $this->afterRequest($uri);
+        if ($this->followRedirects && $this->redirect) {
+            return $this->crawler = $this->followRedirect();
+        }
+        return $this->crawler = $this->createCrawlerFromContent($this->internalRequest->getUri(), $this->internalResponse->getContent(), $this->internalResponse->getHeader('Content-Type'));
+    }
+
+    /**
+     * Calls a URI asynchronously.
+     *
+     * @param string $method        The request method
+     * @param string $uri           The URI to fetch
+     * @param array  $parameters    The Request parameters
+     * @param array  $files         The files
+     * @param array  $server        The server parameters (HTTP headers are referenced with a HTTP_ prefix as PHP does)
+     * @param string $content       The raw body data
+     * @param bool   $changeHistory Whether to update the history or not (only used internally for back(), forward(), and reload())
+     *
+     * @return \Generator Crawler
+     */
+    public function requestAsync($method, $uri, array $parameters = array(), array $files = array(), array $server = array(), $content = null, $changeHistory = true)
+    {
+        $uri = $this->beforeRequest($method, $uri, $parameters, $files, $server, $content, $changeHistory);
+        $this->response = (yield $this->doRequestAsync($this->request));
+        $this->afterRequest($uri);
+        if ($this->followRedirects && $this->redirect) {
+            yield CoInterface::RETURN_WITH => $this->crawler = (yield $this->followRedirectAsync());
+        }
+        yield CoInterface::RETURN_WITH => $this->crawler = $this->createCrawlerFromContent($this->internalRequest->getUri(), $this->internalResponse->getContent(), $this->internalResponse->getHeader('Content-Type'));
+    }
+
+    /**
      * Follow redirects asynchronously?
      *
      * @return Crawler
@@ -228,36 +184,11 @@ abstract class AsyncClient extends BaseClient
      */
     public function followRedirect()
     {
-        if (empty($this->redirect)) {
-            throw new \LogicException('The request was not redirected.');
-        }
-        if (-1 !== $this->maxRedirectsExtended) {
-            if ($this->redirectCountExtended > $this->maxRedirectsExtended) {
-                throw new \LogicException(sprintf('The maximum number (%d) of redirections was reached.', $this->maxRedirectsExtended));
-            }
-        }
-        $request = $this->internalRequest;
-        if (in_array($this->internalResponse->getStatus(), array(302, 303))) {
-            $method = 'GET';
-            $files = array();
-            $content = null;
-        } else {
-            $method = $request->getMethod();
-            $files = $request->getFiles();
-            $content = $request->getContent();
-        }
-        if ('GET' === strtoupper($method)) {
-            // Don't forward parameters for GET request as it should reach the redirection URI
-            $parameters = array();
-        } else {
-            $parameters = $request->getParameters();
-        }
-        $server = $request->getServer();
-        $server = $this->updateServerFromUriExtended($server, $this->redirect);
+        $p = $this->beforeRedirect();
         $this->isMainRequestExtended = false;
-        $response = $this->request($method, $this->redirect, $parameters, $files, $server, $content);
+        $response = $this->request($p['method'], $this->redirect, $p['parameters'], $p['files'], $p['server'], $p['content']);
         $this->isMainRequestExtended = true;
-        return $response;
+        yield CoInterface::RETURN_WITH => $response;
     }
 
     /**
@@ -269,16 +200,62 @@ abstract class AsyncClient extends BaseClient
      */
     public function followRedirectAsync()
     {
+        $p = $this->beforeRedirect();
+        $this->isMainRequestExtended = false;
+        $response = (yield $this->requestAsync($p['method'], $this->redirect, $p['parameters'], $p['files'], $p['server'], $p['content']));
+        $this->isMainRequestExtended = true;
+        yield CoInterface::RETURN_WITH => $response;
+    }
+
+    private function beforeRequest($method, $uri, array $parameters, array $files, array $server, $content, $changeHistory)
+    {
+        if ($this->isMainRequestExtended) {
+            $this->redirectCountExtended = 0;
+        } else {
+            ++$this->redirectCountExtended;
+        }
+        $uri = $this->getAbsoluteUri($uri);
+        $server = array_merge($this->server, $server);
+        if (isset($server['HTTPS'])) {
+            $uri = preg_replace('{^' . parse_url($uri, PHP_URL_SCHEME) . '}', $server['HTTPS'] ? 'https' : 'http', $uri);
+        }
+        if (!$this->history->isEmpty()) {
+            $server['HTTP_REFERER'] = $this->history->current()->getUri();
+        }
+        if (empty($server['HTTP_HOST'])) {
+            $server['HTTP_HOST'] = $this->extractHostExtended($uri);
+        }
+        $server['HTTPS'] = 'https' === parse_url($uri, PHP_URL_SCHEME);
+        $this->internalRequest = new Request($uri, $method, $parameters, $files, $this->cookieJar->allValues($uri), $server, $content);
+        $this->request = $this->filterRequest($this->internalRequest);
+        if ($changeHistory) {
+            $this->history->add($this->internalRequest);
+        }
+        return $uri;
+    }
+
+    private function afterRequest($uri)
+    {
+        $this->internalResponse = $this->filterResponse($this->response);
+        $this->cookieJar->updateFromResponse($this->internalResponse, $uri);
+        $status = $this->internalResponse->getStatus();
+        if ($status >= 300 && $status < 400) {
+            $this->redirect = $this->internalResponse->getHeader('Location');
+        } else {
+            $this->redirect = null;
+        }
+    }
+
+    private function beforeRedirect()
+    {
         if (empty($this->redirect)) {
             throw new \LogicException('The request was not redirected.');
         }
-        if (-1 !== $this->maxRedirectsExtended) {
-            if ($this->redirectCountExtended > $this->maxRedirectsExtended) {
-                throw new \LogicException(sprintf('The maximum number (%d) of redirections was reached.', $this->maxRedirectsExtended));
-            }
+        if (-1 !== $this->maxRedirectsExtended && $this->redirectCountExtended > $this->maxRedirectsExtended) {
+            throw new \LogicException(sprintf('The maximum number (%d) of redirections was reached.', $this->maxRedirectsExtended));
         }
         $request = $this->internalRequest;
-        if (in_array($this->internalResponse->getStatus(), array(302, 303))) {
+        if (in_array($this->internalResponse->getStatus(), [302, 303])) {
             $method = 'GET';
             $files = array();
             $content = null;
@@ -289,36 +266,20 @@ abstract class AsyncClient extends BaseClient
         }
         if ('GET' === strtoupper($method)) {
             // Don't forward parameters for GET request as it should reach the redirection URI
-            $parameters = array();
+            $parameters = [];
         } else {
             $parameters = $request->getParameters();
         }
         $server = $request->getServer();
         $server = $this->updateServerFromUriExtended($server, $this->redirect);
-        $this->isMainRequestExtended = false;
-        $response = (yield $this->requestAsync($method, $this->redirect, $parameters, $files, $server, $content));
-        $this->isMainRequestExtended = true;
-        yield CoInterface::RETURN_WITH => $response;
-    }
-
-    /**
-     * Makes a request from a Request object directly asynchronously.
-     *
-     * @param Request $request       A Request instance
-     * @param bool    $changeHistory Whether to update the history or not (only used internally for back(), forward(), and reload())
-     *
-     * @return \Generator Crawler
-     */
-    protected function requestFromRequestAsync(Request $request, $changeHistory = true)
-    {
-        yield CoInterface::RETURN_WITH => $this->requestAsync($request->getMethod(), $request->getUri(), $request->getParameters(), $request->getFiles(), $request->getServer(), $request->getContent(), $changeHistory);
+        return compact('method', 'parameters', 'files', 'server', 'content');
     }
 
     private function updateServerFromUriExtended($server, $uri)
     {
         $server['HTTP_HOST'] = $this->extractHostExtended($uri);
         $scheme = parse_url($uri, PHP_URL_SCHEME);
-        $server['HTTPS'] = null === $scheme ? $server['HTTPS'] : 'https' == $scheme;
+        $server['HTTPS'] = null === $scheme ? $server['HTTPS'] : 'https' === $scheme;
         unset($server['HTTP_IF_NONE_MATCH'], $server['HTTP_IF_MODIFIED_SINCE']);
         return $server;
     }
@@ -326,9 +287,7 @@ abstract class AsyncClient extends BaseClient
     private function extractHostExtended($uri)
     {
         $host = parse_url($uri, PHP_URL_HOST);
-        if ($port = parse_url($uri, PHP_URL_PORT)) {
-            return $host . ':' . $port;
-        }
-        return $host;
+        $port = parse_url($uri, PHP_URL_PORT);
+        return $host . (is_int($port) ? ":$port" : '');
     }
 }

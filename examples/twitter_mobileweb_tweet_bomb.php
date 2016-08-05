@@ -41,7 +41,7 @@ Co::wait(function () {
 
     $crawler = yield $client->requestAsync('GET', 'https://mobile.twitter.com/compose/tweet');
 
-    for ($i = 0; $i < 10; ++$i) {
+    for ($i = 0; $i < 5; ++$i) {
         $form = $crawler->filter('*[name=commit]')->form([
             'tweet[text]' => "@tos HAHAHA!! [$i] " . mt_rand(),
         ]);
