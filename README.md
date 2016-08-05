@@ -1,4 +1,4 @@
-# Coutte
+# Coutte [![Build Status](https://travis-ci.org/mpyw/coutte.svg?branch=master)](https://travis-ci.org/mpyw/coutte) [![Coverage Status](https://coveralls.io/repos/github/mpyw/coutte/badge.svg?branch=master)](https://coveralls.io/github/mpyw/coutte?branch=master) [![Scrutinizer Code Quality](https://scrutinizer-ci.com/g/mpyw/coutte/badges/quality-score.png?b=master)](https://scrutinizer-ci.com/g/mpyw/coutte/?branch=master)
 
 Yet another asynchronous scraper based on **[mpyw/co](https://github.com/mpyw/co)**
 
