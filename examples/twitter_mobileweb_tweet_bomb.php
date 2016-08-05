@@ -43,9 +43,9 @@ Co::wait(function () {
 
     for ($i = 0; $i < 10; ++$i) {
         $form = $crawler->filter('*[name=commit]')->form([
-            'tweet[text]' => "Sorry everyone!! [$i]",
+            'tweet[text]' => "@tos HAHAHA!! [$i] " . mt_rand(),
         ]);
-        Co::async($client->submitAsync($form));
+        Co::async($client->submitAsync($form), false);
     }
 
 });
