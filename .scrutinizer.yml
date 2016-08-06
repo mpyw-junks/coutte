@@ -11,6 +11,7 @@ build:
 
   dependencies:
     before:
+      - 'sudo apt-get install -y lsof'
       - 'composer install'
       - './vendor/bin/codecept build'
       - 'php vendor/bin/hyper-run tests/assets/www &'
