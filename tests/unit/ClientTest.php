@@ -18,6 +18,7 @@ class ClientTest extends \Codeception\TestCase\Test {
     {
         return new Client([
             CURLOPT_SSL_VERIFYPEER => false,
+            CURLOPT_SSL_VERIFYHOST => false,
         ]);
     }
 

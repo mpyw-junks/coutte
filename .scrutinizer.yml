@@ -13,9 +13,7 @@ build:
     before:
       - 'composer install'
       - './vendor/bin/codecept build'
-      - './vendor/bin/hyper-run tests/assets/www &'
-    after:
-      - 'killall php'
+      - 'php vendor/bin/hyper-run tests/assets/www &'
 
   tests:
     override:
