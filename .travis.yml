@@ -15,7 +15,9 @@ cache:
     - $HOME/.composer/cache
 
 script:
+  - php vendor/bin/hyper-run tests/assets/www &
   - php vendor/bin/codecept run unit --coverage --coverage-xml
+  - killall php
 
 branches:
   only:
