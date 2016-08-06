@@ -72,7 +72,9 @@ class Client extends AsyncBaseClient implements BasicInterface, RequesterInterfa
         $ch = $this->createCurl($request);
         $content = (yield $ch);
         yield CoInterface::RETURN_WITH => $this->processResult($content, $ch);
+        // @codeCoverageIgnoreStart
     }
+    // @codeCoverageIgnoreEnd
 
     protected function createCurl($request)
     {
@@ -98,7 +100,7 @@ class Client extends AsyncBaseClient implements BasicInterface, RequesterInterfa
         }
         $params = $request->getParameters();
         $files = $request->getFiles();
-        if (!$files) {
+        if (!$files && !self::containsCURLFile($params)) {
             $content = http_build_query($params, '', '&', PHP_QUERY_RFC3986);
             curl_setopt($ch, CURLOPT_POSTFIELDS, $content);
             return $ch;
@@ -143,6 +145,9 @@ class Client extends AsyncBaseClient implements BasicInterface, RequesterInterfa
                 continue;
             }
         }
+        if ($request->getContent() !== null && !preg_grep('/^content-type:/', $headers)) {
+            $headers[] = 'content-type: application/octet-stream';
+        }
         return $headers;
     }
 
@@ -170,12 +175,14 @@ class Client extends AsyncBaseClient implements BasicInterface, RequesterInterfa
                 $multipart[$name] = new \CURLFile($info);
                 continue;
             }
-            if (!isset($info['tmp_name'])) {
+            if (!isset($info['tmp_name']) || is_array($info['tmp_name'])) {
                 $this->addMultipartFiles($info, $multipart, $name);
                 continue;
             }
             if ('' === $info['tmp_name']) {
+                // @codeCoverageIgnoreStart
                 continue;
+                // @codeCoverageIgnoreEnd
             }
             $multipart[$name] = new \CURLFile(
                 $info['tmp_name'],
@@ -197,5 +204,21 @@ class Client extends AsyncBaseClient implements BasicInterface, RequesterInterfa
             }
             $this->addMultipartFields($value, $multipart, $name);
         }
+    }
+
+    protected static function containsCURLFile(array $array)
+    {
+        foreach ($array as $item) {
+            if (is_array($item)) {
+                if (self::containsCURLFile($item)) {
+                    return true;
+                }
+                continue;
+            }
+            if ($item instanceof \CURLFile) {
+                return true;
+            }
+        }
+        return false;
     }
 }
