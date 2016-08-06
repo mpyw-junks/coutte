@@ -5,11 +5,44 @@ namespace mpyw\Coutte;
 use mpyw\Co\CoInterface;
 use mpyw\Co\CURLException;
 use mpyw\Coutte\Internal\AsyncClient as AsyncBaseClient;
+
+use Symfony\Component\BrowserKit\CookieJar;
+use Symfony\Component\BrowserKit\History;
 use Symfony\Component\BrowserKit\Request;
 use Symfony\Component\BrowserKit\Response;
 
 class Client extends AsyncBaseClient implements BasicInterface, RequesterInterface, AsyncRequesterInterface
 {
+    protected $options = [];
+
+    /**
+     * Constructor.
+     *
+     * @param array     $curlOptions  Options for curl_setopt_array().
+     * @param array     $server       The server parameters (equivalent of $_SERVER)
+     * @param History   $history      A History instance to store the browser history
+     * @param CookieJar $cookieJar    A CookieJar instance to store the cookies
+     */
+    public function __construct(
+        array $curlOptions = [],
+        array $server = [],
+        History $history = null,
+        CookieJar $cookieJar = null
+    ) {
+        $this->setCurlOptions($curlOptions);
+        parent::__construct($server, $history, $cookieJar);
+    }
+
+    public function setCurlOptions(array $options)
+    {
+        $this->options = $options + $this->options;
+    }
+
+    public function getCurlOptions()
+    {
+        return $this->options;
+    }
+
     /**
      * Makes a request.
      *
@@ -49,11 +82,12 @@ class Client extends AsyncBaseClient implements BasicInterface, RequesterInterfa
             CURLOPT_URL => $request->getUri(),
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_HEADER => true,
-            CURLOPT_ENCODING => 'gzip',
             CURLOPT_HTTPHEADER => $this->createHeaders($request),
             CURLOPT_COOKIE => $this->createCookieHeader($request),
             CURLOPT_CUSTOMREQUEST => $method,
             CURLOPT_NOBODY => $method === 'HEAD',
+        ] + $this->options + [
+            CURLOPT_ENCODING => 'gzip',
         ]);
         if ($method === 'HEAD' || $method === 'GET') {
             return $ch;

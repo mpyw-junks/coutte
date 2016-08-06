@@ -10,11 +10,31 @@ interface BasicInterface
     /**
      * Constructor.
      *
-     * @param array     $server    The server parameters (equivalent of $_SERVER)
-     * @param History   $history   A History instance to store the browser history
-     * @param CookieJar $cookieJar A CookieJar instance to store the cookies
+     * @param array     $curlOptions  Options for curl_setopt_array().
+     * @param array     $server       The server parameters (equivalent of $_SERVER)
+     * @param History   $history      A History instance to store the browser history
+     * @param CookieJar $cookieJar    A CookieJar instance to store the cookies
      */
-    public function __construct(array $server = [], History $history = null, CookieJar $cookieJar = null);
+    public function __construct(
+        array $curlOptions = [],
+        array $server = [],
+        History $history = null,
+        CookieJar $cookieJar = null
+    );
+
+    /**
+     * Sets cURL options.
+     *
+     * @param array $options Options for curl_setopt_array().
+     */
+    public function setCurlOptions(array $options);
+
+    /**
+     * Gets cURL options.
+     *
+     * @return array Options for curl_setopt_array().
+     */
+    public function getCurlOptions();
 
     /**
      * Sets whether to automatically follow redirects or not.
