@@ -9,8 +9,8 @@ use mpyw\Privator\ProxyException;
 /**
  * @requires PHP 7.0
  */
-class ClientConfigTest extends \Codeception\TestCase\Test {
-
+class ClientConfigTest extends \Codeception\TestCase\Test
+{
     use \Codeception\Specify;
 
     public function testCurlOptionsConfig()

@@ -9,8 +9,8 @@ use mpyw\Privator\ProxyException;
 /**
  * @requires PHP 7.0
  */
-class ClientUploadTest extends \Codeception\TestCase\Test {
-
+class ClientUploadTest extends \Codeception\TestCase\Test
+{
     use \Codeception\Specify;
 
     public function getClient()

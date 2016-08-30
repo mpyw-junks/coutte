@@ -10,8 +10,8 @@ use mpyw\Privator\ProxyException;
 /**
  * @requires PHP 7.0
  */
-class ClientGetAndPostTest extends \Codeception\TestCase\Test {
-
+class ClientGetAndPostTest extends \Codeception\TestCase\Test
+{
     use \Codeception\Specify;
 
     public function getClient()

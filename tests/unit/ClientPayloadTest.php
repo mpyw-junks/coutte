@@ -9,8 +9,8 @@ use mpyw\Privator\ProxyException;
 /**
  * @requires PHP 7.0
  */
-class ClientPayloadTest extends \Codeception\TestCase\Test {
-
+class ClientPayloadTest extends \Codeception\TestCase\Test
+{
     use \Codeception\Specify;
 
     public function getClient()
